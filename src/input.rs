@@ -222,21 +222,15 @@ impl<Manager> Input<Manager> {
         let analog_action_handle = self.get_analog_action_handle(action_name);
     
         let origins = if let Some(digital_handle) = digital_action_handle {
-            // Get digital action origins
             self.get_digital_action_origins(input_handle, action_set_handle, digital_handle)
         } else if let Some(analog_handle) = analog_action_handle {
-            // Get analog action origins
             self.get_analog_action_origins(input_handle, action_set_handle, analog_handle)
         } else {
-            // No matching action found
             return None;
         };
     
-        // Convert origins to glyph paths if any origins exist
         if let Some(origins_vec) = origins {
-            // For simplicity, we'll return the first origin's glyph path
             if let Some(first_origin) = origins_vec.first() {
-                // Wrap the result in Some() to return Option<String>
                 return Some(self.get_glyph_for_action_origin(*first_origin));
             }
         }
@@ -251,7 +245,7 @@ impl<Manager> Input<Manager> {
         action_set_handle: sys::InputActionSetHandle_t,
         analog_action_handle: sys::InputAnalogActionHandle_t,
     ) -> Option<Vec<EInputActionOrigin>> {
-        let mut origins_out = [0 as EInputActionOrigin; STEAM_INPUT_MAX_ORIGINS as usize];
+        let mut origins_out = [EInputActionOrigin::try_from(0).unwrap(); STEAM_INPUT_MAX_ORIGINS as usize];
         let num_origins = unsafe {
             sys::SteamAPI_ISteamInput_GetAnalogActionOrigins(
                 self.input,
