@@ -221,12 +221,14 @@ impl<Manager> Input<Manager> {
         let digital_action_handle = self.get_digital_action_handle(action_name);
         let analog_action_handle = self.get_analog_action_handle(action_name);
     
-        let origins = if let Some(digital_handle) = digital_action_handle {
-            self.get_digital_action_origins(input_handle, action_set_handle, digital_handle)
-        } else if let Some(analog_handle) = analog_action_handle {
-            self.get_analog_action_origins(input_handle, action_set_handle, analog_handle)
-        } else {
-            return None;
+        let origins = match digital_action_handle {
+            Some(handle) => self.get_digital_action_origins(input_handle, action_set_handle, handle),
+            None => return None,
+        };
+    
+        let origins = match analog_action_handle {
+            Some(handle) => self.get_analog_action_origins(input_handle, action_set_handle, handle),
+            None => return None,
         };
     
         if let Some(origins_vec) = origins {
@@ -237,15 +239,15 @@ impl<Manager> Input<Manager> {
     
         None
     }
-
-
+    
     pub fn get_analog_action_origins(
         &self,
         input_handle: sys::InputHandle_t,
         action_set_handle: sys::InputActionSetHandle_t,
         analog_action_handle: sys::InputAnalogActionHandle_t,
     ) -> Option<Vec<EInputActionOrigin>> {
-        let mut origins_out = [EInputActionOrigin::try_from(0).unwrap(); STEAM_INPUT_MAX_ORIGINS as usize];
+        // Assuming EInputActionOrigin has a default value or a specific constructor
+        let mut origins_out = [EInputActionOrigin::default(); STEAM_INPUT_MAX_ORIGINS as usize];
         let num_origins = unsafe {
             sys::SteamAPI_ISteamInput_GetAnalogActionOrigins(
                 self.input,
@@ -262,14 +264,15 @@ impl<Manager> Input<Manager> {
             None
         }
     }
-
+    
     pub fn get_digital_action_origins(
         &self,
         input_handle: sys::InputHandle_t,
         action_set_handle: sys::InputActionSetHandle_t,
         digital_action_handle: sys::InputDigitalActionHandle_t,
     ) -> Option<Vec<EInputActionOrigin>> {
-        let mut origins_out = [0 as EInputActionOrigin; STEAM_INPUT_MAX_ORIGINS as usize];
+        // Assuming EInputActionOrigin has a default value or a specific constructor
+        let mut origins_out = [EInputActionOrigin::default(); STEAM_INPUT_MAX_ORIGINS as usize];
         let num_origins = unsafe {
             sys::SteamAPI_ISteamInput_GetDigitalActionOrigins(
                 self.input,
