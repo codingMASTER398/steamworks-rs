@@ -1,4 +1,6 @@
 use sys::InputHandle_t;
+use crate::sys::EInputActionOrigin;
+use crate::sys::STEAM_INPUT_MAX_ORIGINS;
 
 use super::*;
 
@@ -234,12 +236,14 @@ impl<Manager> Input<Manager> {
         if let Some(origins_vec) = origins {
             // For simplicity, we'll return the first origin's glyph path
             if let Some(first_origin) = origins_vec.first() {
-                return self.get_glyph_for_action_origin(*first_origin);
+                // Wrap the result in Some() to return Option<String>
+                return Some(self.get_glyph_for_action_origin(*first_origin));
             }
         }
     
         None
     }
+
 
     pub fn get_analog_action_origins(
         &self,
