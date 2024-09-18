@@ -211,85 +211,45 @@ impl<Manager> Input<Manager> {
         }
     }
 
-    pub fn get_action_glyph_path(
-        &self,
-        input_handle: sys::InputHandle_t,
-        action_set_handle: sys::InputActionSetHandle_t,
-        action_name: &str,
-    ) -> Option<String> {
-        // Retrieve the digital or analog action handle based on the action name.
-        let digital_action_handle = self.get_digital_action_handle(action_name);
-        let analog_action_handle = self.get_analog_action_handle(action_name);
-    
-        // Use pattern matching to handle potential `None` values from the handles
-        let origins = match digital_action_handle {
-            Some(handle) => self.get_digital_action_origins(input_handle, action_set_handle, handle),
-            None => return None,
-        };
-    
-        let origins = match analog_action_handle {
-            Some(handle) => self.get_analog_action_origins(input_handle, action_set_handle, handle),
-            None => return None,
-        };
-    
-        // If origins are found, get the glyph for the first origin
-        if let Some(origins_vec) = origins {
-            if let Some(first_origin) = origins_vec.first() {
-                return Some(self.get_glyph_for_action_origin(*first_origin));
-            }
-        }
-    
-        // No glyph found
-        None
-    }
-    
-    pub fn get_analog_action_origins(
-        &self,
-        input_handle: sys::InputHandle_t,
-        action_set_handle: sys::InputActionSetHandle_t,
-        analog_action_handle: sys::InputAnalogActionHandle_t,
-    ) -> Option<Vec<EInputActionOrigin>> {
-        // Replace 'UNKNOWN' with the appropriate default or constructor value for EInputActionOrigin
-        let mut origins_out = [EInputActionOrigin::UNKNOWN; STEAM_INPUT_MAX_ORIGINS as usize];
-        let num_origins = unsafe {
-            sys::SteamAPI_ISteamInput_GetAnalogActionOrigins(
-                self.input,
-                input_handle,
-                action_set_handle,
-                analog_action_handle,
-                origins_out.as_mut_ptr(),
-            )
-        };
-    
-        if num_origins > 0 {
-            Some(origins_out[..num_origins as usize].to_vec())
-        } else {
-            None
-        }
-    }
-    
+        /// Get the origin(s) for a digital action within an action set.
     pub fn get_digital_action_origins(
         &self,
         input_handle: sys::InputHandle_t,
         action_set_handle: sys::InputActionSetHandle_t,
         digital_action_handle: sys::InputDigitalActionHandle_t,
-    ) -> Option<Vec<EInputActionOrigin>> {
-        // Replace 'UNKNOWN' with the appropriate default or constructor value for EInputActionOrigin
-        let mut origins_out = [EInputActionOrigin::UNKNOWN; STEAM_INPUT_MAX_ORIGINS as usize];
-        let num_origins = unsafe {
-            sys::SteamAPI_ISteamInput_GetDigitalActionOrigins(
+    ) -> Vec<sys::EInputActionOrigin> {
+        unsafe {
+            let mut origins = Vec::with_capacity(sys::STEAM_INPUT_MAX_ORIGINS as usize);
+            let len = sys::SteamAPI_ISteamInput_GetDigitalActionOrigins(
                 self.input,
                 input_handle,
                 action_set_handle,
                 digital_action_handle,
-                origins_out.as_mut_ptr(),
-            )
-        };
-    
-        if num_origins > 0 {
-            Some(origins_out[..num_origins as usize].to_vec())
-        } else {
-            None
+                origins.as_mut_ptr(),
+            );
+            origins.set_len(len as usize);
+            origins
+        }
+    }
+
+    /// Get the origin(s) for an analog action within an action set.
+    pub fn get_analog_action_origins(
+        &self,
+        input_handle: sys::InputHandle_t,
+        action_set_handle: sys::InputActionSetHandle_t,
+        analog_action_handle: sys::InputAnalogActionHandle_t,
+    ) -> Vec<sys::EInputActionOrigin> {
+        unsafe {
+            let mut origins = Vec::with_capacity(sys::STEAM_INPUT_MAX_ORIGINS as usize);
+            let len = sys::SteamAPI_ISteamInput_GetAnalogActionOrigins(
+                self.input,
+                input_handle,
+                action_set_handle,
+                analog_action_handle,
+                origins.as_mut_ptr(),
+            );
+            origins.set_len(len as usize);
+            origins
         }
     }
 }
